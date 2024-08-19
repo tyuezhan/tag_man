@@ -29,9 +29,10 @@
       <remap from="~transform" to="transform_cam_apriltag"/>
       <param name="broadcast_tf" type="bool" value="false"/>
       <param name="auto_disconnect" type="bool" value="false"/>
-      <rosparam param="tag_descriptions" subst_value="true">[
+      <!-- <rosparam param="tag_descriptions" subst_value="true">[
         {id: $(arg tag_id), size: $(arg tag_size)}]
-      </rosparam>
+      </rosparam> -->
+      <rosparam file="$(find tag_swarm)/config/tag_descriptions.yaml" command="load"/>
     </node>
   </group>
 </launch>
