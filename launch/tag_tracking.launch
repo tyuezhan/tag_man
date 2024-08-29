@@ -1,0 +1,12 @@
+<launch>
+
+  <arg name="mav_name" default="$(optenv MAV_NAME)"/>
+
+  <!-- <group ns="$(arg mav_name)"> -->
+    <node pkg="tag_swarm" type="tag_tracking.py"
+      name="tag_tracking_node" output="screen">
+      <param name="mav_name" type="string" value="$(arg mav_name)"/>
+    </node>
+  <!-- </group> -->
+
+</launch>
