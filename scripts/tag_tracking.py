@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation as R
 from nav_msgs.msg import Odometry
 from apriltag_msgs.msg import ApriltagPoseStamped
 from geometry_msgs.msg import PoseArray, Pose
+from nav_msgs.msg import Path
 import tf2_ros
 
 import numpy as np
@@ -18,13 +19,18 @@ class TagTracking:
         self.dfc2base = None
 
         self.mav_name = rospy.get_param('~mav_name', 'dragonfly21')
-        self.odom_sub = rospy.Subscriber('{}/quadrotor_ukf/control_odom'.format(self.mav_name), Odometry, self.odom_cb)
+        self.odom_sub = rospy.Subscriber('{}/quadrotor_ukf/control_odom_throttled'.format(self.mav_name), Odometry, self.odom_cb)
         self.odom_tag_sub = rospy.Subscriber('{}/odom_tag'.format(self.mav_name), Odometry, self.odom_tag_cb)
         self.world_odom_pub = rospy.Publisher('{}/world_odom'.format(self.mav_name), Odometry, queue_size=10)
         self.tag_pose_sub = rospy.Subscriber('{}/dfc/apriltag_pose_estimator/apriltag_poses'.format(self.mav_name), ApriltagPoseStamped, self.tag_pose_cb)
         self.world_tag_pub = rospy.Publisher('{}/world_apriltag_poses'.format(self.mav_name), ApriltagPoseStamped, queue_size=10)
         self.dfc_frame_id = self.mav_name + '/dfc'
         self.base_frame_id = self.mav_name + '/base_link'
+        
+        # waypoint sub
+        self.global_wp_sub = rospy.Subscriber('{}/global_waypoints'.format(self.mav_name), Path, self.global_wp_cb)
+        self.local_wp_pub = rospy.Publisher('{}/waypoints'.format(self.mav_name), Path, queue_size=10)
+
         # TF
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -149,6 +155,33 @@ class TagTracking:
         world_tag_msg.apriltags = msg.apriltags
         world_tag_msg.posearray = tag_pose_array
         self.world_tag_pub.publish(world_tag_msg)
+
+    # Transform global waypoints to local frame using self.o2w
+    def global_wp_cb(self, msg):
+        if not self.world_tf_set:
+            rospy.logwarn('[global wp cb] World TF not set!!!')
+            return
+        local_wp_msg = Path()
+        for i in range(len(msg.poses)):
+            wp = np.eye(4)
+            wp[:3, :3] = R.from_quat([msg.poses[i].pose.orientation.x,
+                                      msg.poses[i].pose.orientation.y,
+                                      msg.poses[i].pose.orientation.z,
+                                      msg.poses[i].pose.orientation.w]).as_matrix()
+            wp[:3, 3] = np.array([msg.poses[i].pose.position.x,
+                                  msg.poses[i].pose.position.y,
+                                  msg.poses[i].pose.position.z])
+            local_wp = np.linalg.inv(self.o2w) @ wp
+            wp_msg = Pose()
+            wp_msg.position.x = local_wp[0, 3]
+            wp_msg.position.y = local_wp[1, 3]
+            wp_msg.position.z = local_wp[2, 3]
+            wp_msg.orientation.x, wp_msg.orientation.y, wp_msg.orientation.z, wp_msg.orientation.w = R.from_matrix(local_wp[:3, :3]).as_quat()
+            local_wp_msg.poses.append(wp_msg)
+        local_wp_msg.header.stamp = rospy.Time.now()
+        local_wp_msg.header.frame_id = self.mav_name + '/odom'
+        self.local_wp_pub.publish(local_wp_msg)
+        rospy.loginfo("Published local waypoints!")
 
 
     def run(self):
