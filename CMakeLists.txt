@@ -74,3 +74,7 @@ install(TARGETS tag_manager tag_search
 ## Mark cpp header files for installation
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
 install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
+
+# Install Python scripts
+install(DIRECTORY scripts/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts USE_SOURCE_PERMISSIONS)
+
