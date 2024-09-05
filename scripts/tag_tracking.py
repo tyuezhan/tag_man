@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 from scipy.spatial.transform import Rotation as R
@@ -17,7 +17,7 @@ class TagTracking:
         self.o2p = None
         self.dfc2base = None
 
-        self.mav_name = rospy.get_param('mav_name', 'dragonfly21')
+        self.mav_name = rospy.get_param('~mav_name', 'dragonfly21')
         self.odom_sub = rospy.Subscriber('{}/quadrotor_ukf/control_odom'.format(self.mav_name), Odometry, self.odom_cb)
         self.odom_tag_sub = rospy.Subscriber('{}/odom_tag'.format(self.mav_name), Odometry, self.odom_tag_cb)
         self.world_odom_pub = rospy.Publisher('{}/world_odom'.format(self.mav_name), Odometry, queue_size=10)
@@ -28,6 +28,10 @@ class TagTracking:
         # TF
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        rospy.loginfo(f"mav_name: {self.mav_name}")
+        rospy.loginfo("subscribe to odom: " + '{}/quadrotor_ukf/control_odom'.format(self.mav_name))
+        rospy.loginfo("subscribe to odom_tag: " + '{}/odom_tag'.format(self.mav_name))
+        rospy.loginfo("subscribe to tag_pose: " + '{}/dfc/apriltag_pose_estimator/apriltag_poses'.format(self.mav_name))
         rospy.loginfo('Tag Tracking Initialized')
 
 
