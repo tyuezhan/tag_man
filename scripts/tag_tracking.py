@@ -35,7 +35,7 @@ class TagTracking:
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         rospy.loginfo(f"mav_name: {self.mav_name}")
-        rospy.loginfo("subscribe to odom: " + '{}/quadrotor_ukf/control_odom'.format(self.mav_name))
+        rospy.loginfo("subscribe to odom: " + '{}/quadrotor_ukf/control_odom_throttled'.format(self.mav_name))
         rospy.loginfo("subscribe to odom_tag: " + '{}/odom_tag'.format(self.mav_name))
         rospy.loginfo("subscribe to tag_pose: " + '{}/dfc/apriltag_pose_estimator/apriltag_poses'.format(self.mav_name))
         rospy.loginfo('Tag Tracking Initialized')
